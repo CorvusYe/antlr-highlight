@@ -9,3 +9,7 @@
 ## 0.0.3
 
 * Update repo link
+
+## 0.0.4
+
+* Feat: Support for AST formed by antlr.

@@ -1,0 +1,67 @@
+part of re_highlight;
+
+class ModeAntlr extends Mode {
+  Lexer Function(CharStream) lexerBuilder;
+  Parser Function(TokenStream) parserBuilder;
+  ParseTree Function(Parser) treeBuilder;
+  List<String>? classes;
+  String? commentClass;
+
+  ModeAntlr({
+    required this.lexerBuilder,
+    required this.parserBuilder,
+    required this.treeBuilder,
+    this.classes,
+    this.commentClass,
+    super.ref,
+    super.refs,
+    super.name,
+    super.unicodeRegex,
+    super.caseInsensitive,
+    super.self,
+    super.disableAutodetect,
+    super.aliases,
+    super.classNameAliases,
+    super.supersetOf,
+    super.begin,
+    super.match,
+    super.end,
+    super.className,
+    super.scope,
+    super.beginScope,
+    super.endScope,
+    super.contains,
+    super.endsParent,
+    super.endsWithParent,
+    super.endSameAsBegin,
+    super.skip,
+    super.excludeBegin,
+    super.excludeEnd,
+    super.returnBegin,
+    super.returnEnd,
+    super.beforeBegin,
+    super.beforeMatch,
+    super.parent,
+    super.starts,
+    super.lexemes,
+    super.keywords,
+    super.beginKeywords,
+    super.relevance,
+    super.illegal,
+    super.variants,
+    super.cachedVariants,
+    super.subLanguage,
+    super.isCompiled,
+    super.label,
+    super.terminatorEnd,
+    super.compilerExtensions,
+    super.keywordPatternRe,
+    super.beginRe,
+    super.endRe,
+    super.illegalRe,
+    super.matcher,
+    super.onBegin,
+    super.onEnd,
+    super.data,
+  });
+}

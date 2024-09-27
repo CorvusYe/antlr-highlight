@@ -3,6 +3,10 @@ part of re_highlight;
 const int _kNoMatch = -1;
 const int _kMaxKeywordHits = 7;
 
+typedef HighlightHandler = HighlightResult Function(
+    String languageName, String codeToHighlight, bool ignoreIllegals,
+    [Mode? continuation]);
+
 class Highlight {
   final List<HLPlugin> _plugins;
   final Map<String, Mode> _languages;
@@ -11,11 +15,16 @@ class Highlight {
   // even if a single syntax or parse hits a fatal error
   bool _safeMode;
 
+  final Map<Type, HighlightHandler> _highlightHandlers = {};
+
   Highlight()
       : _plugins = [],
         _languages = {},
         _aliases = {},
-        _safeMode = true;
+        _safeMode = true {
+    _highlightHandlers[Mode] = _highlight;
+    _highlightHandlers[ModeAntlr] = _highlightAntlr;
+  }
 
   void debugMode() {
     _safeMode = false;
@@ -40,7 +49,8 @@ class Highlight {
     // a before plugin can usurp the result completely by providing it's own
     // in which case we don't even need to call highlight
     final HighlightResult result = context.result ??
-        _highlight(context.language, context.code, ignoreIllegals);
+        _highlightHandlers[getLanguage(context.language).runtimeType]!
+            .call(context.language, context.code, ignoreIllegals);
 
     result.code = context.code;
     // the plugin can change anything in result to suite it
@@ -87,7 +97,8 @@ class Highlight {
     final List<HighlightResult> results = languages
         .where((e) => getLanguage(e) != null)
         .where((e) => autoDetection(e))
-        .map((name) => _highlight(name, code, false))
+        .map((name) => _highlightHandlers[getLanguage(name).runtimeType]!
+            .call(name, code, false))
         .toList();
     results.insert(0, plaintext); // plaintext is always an option
     // Dart's list.sort() is not stable, here we need a stable sort
@@ -601,6 +612,93 @@ class Highlight {
         rethrow;
       }
     }
+  }
+
+  HighlightResult _highlightAntlr(
+      String languageName, String codeToHighlight, bool ignoreIllegals,
+      [Mode? continuation]) {
+    ModeAntlr? mode = getLanguage(languageName) as ModeAntlr?;
+    if (mode == null) {
+      throw AssertionError('Unknown language: "$languageName"');
+    }
+
+    final Lexer lexer =
+        mode.lexerBuilder(InputStream.fromString(codeToHighlight));
+    final CommonTokenStream tokens = CommonTokenStream(lexer);
+    tokens.fill();
+    final Parser parser = mode.parserBuilder(tokens);
+    parser.removeErrorListeners();
+    ParseTree tree = mode.treeBuilder(parser);
+    final Emitter emitter = _TokenTreeEmitter();
+    String _nodeClass(Parser? parser, Tree? child) {
+      if (child is TerminalNode) {
+        return parser?.vocabulary.getSymbolicName(child.symbol.type) ??
+            child.runtimeType.toString();
+      } else if (child is RuleContext) {
+        return parser?.ruleNames[child.ruleIndex] ??
+            child.runtimeType.toString();
+      }
+      return child.runtimeType.toString();
+    }
+
+    ///
+    /// @return [DataNode]
+    void _processTree(
+      Tree? tree,
+      Parser? parser,
+      Emitter emitter,
+      String text,
+      String? clazz,
+      List<int> cursor,
+    ) {
+      for (int i = 0; i < (tree?.childCount ?? 0); i++) {
+        Tree? child = tree?.getChild(i);
+        if (child is ErrorNode) continue;
+        String className = _nodeClass(parser, child);
+        if (mode.classes?.contains(className) == true) {
+          emitter.startScope(className);
+        }
+        if (child != null) {
+          _processTree(child, parser, emitter, text, className, cursor);
+        }
+        if (child is TerminalNode) {
+          Token? symbol = child.symbol;
+          if (cursor.first < symbol.startIndex) {
+            String? blank = text.substring(cursor.first, symbol.startIndex);
+            emitter.startScope(mode.commentClass ?? 'comment');
+            emitter.addText(blank);
+            emitter.endScope();
+          }
+          cursor[0] = symbol.stopIndex + 1;
+          String? _text = symbol.text;
+          if (_text != null) {
+            emitter.addText(_text);
+          }
+        }
+        if (mode.classes?.contains(className) == true) {
+          emitter.endScope();
+        }
+      }
+    }
+
+    newStyle() {
+      // 将 tree 组装成 TextSpan
+      List<int> cursor = [0];
+
+      _processTree(tree, parser, emitter, codeToHighlight, null, cursor);
+      emitter.finalize();
+    }
+
+    newStyle();
+
+    return HighlightResult(
+      code: codeToHighlight,
+      language: languageName,
+      relevance: 10,
+      illegal: false,
+      emitter: emitter,
+      top: mode,
+    );
   }
 }
 
