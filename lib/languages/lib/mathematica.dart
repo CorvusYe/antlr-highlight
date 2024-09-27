@@ -6627,7 +6627,8 @@ const _SYSTEM_SYMBOLS = <String>[
   "\$WolframUUID"
 ];
 
-ModeCallback callbackOnBegin = (EnhancedMatch match, ModeCallbackResponse response) {
+ModeCallback callbackOnBegin =
+    (EnhancedMatch match, ModeCallbackResponse response) {
   if (!_SYSTEM_SYMBOLS.contains(match[0])) {
     response.ignoreMatch();
   }

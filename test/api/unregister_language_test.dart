@@ -2,14 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:re_highlight/re_highlight.dart';
 
-final Mode jQuery = Mode(
-  name: "jQuery",
-  contains: [
-    Mode(
-      beginKeywords: "class"
-    )
-  ]
-);
+final Mode jQuery =
+    Mode(name: "jQuery", contains: [Mode(beginKeywords: "class")]);
 
 void main() {
   final Highlight highlight = Highlight();

@@ -16,13 +16,9 @@ void _beforeMatchExt(Mode mode, Mode? parent) {
   mode.clean();
 
   mode.keywords = originalMode.keywords;
-  mode.begin = _concat([originalMode.beforeMatch, _lookahead(originalMode.begin)]);
-  mode.starts = Mode(
-    relevance: 0,
-    contains: [
-      originalMode
-    ]
-  );
+  mode.begin =
+      _concat([originalMode.beforeMatch, _lookahead(originalMode.begin)]);
+  mode.starts = Mode(relevance: 0, contains: [originalMode]);
   mode.relevance = 0;
   originalMode.endsParent = true;
   originalMode.beforeMatch = null;

@@ -33,19 +33,19 @@ class _KeywordData {
     if (other is! _KeywordData) {
       return false;
     }
-    return other.scopeName == scopeName
-      && other.score == score;
+    return other.scopeName == scopeName && other.score == score;
   }
 
   @override
   String toString() {
     return '[$scopeName, $score]';
   }
-
 }
 
 /// Given raw keywords from a language definition, compile them.
-Map<String, _KeywordData> _compileKeywords(dynamic rawKeywords, bool? caseInsensitive, [scopeName = _kDefaultKeywordScope]) {
+Map<String, _KeywordData> _compileKeywords(
+    dynamic rawKeywords, bool? caseInsensitive,
+    [scopeName = _kDefaultKeywordScope]) {
   final Map<String, _KeywordData> compiledKeywords = {};
 
   /// Compiles an individual list of keywords
@@ -56,7 +56,8 @@ Map<String, _KeywordData> _compileKeywords(dynamic rawKeywords, bool? caseInsens
     }
     for (final String keyword in keywordList) {
       final List<String> pair = keyword.split('|');
-      compiledKeywords[pair[0]] = _KeywordData(scopeName, _scoreForKeyword(pair[0], pair.length > 1 ? pair[1] : null));
+      compiledKeywords[pair[0]] = _KeywordData(scopeName,
+          _scoreForKeyword(pair[0], pair.length > 1 ? pair[1] : null));
     }
   }
 
@@ -68,11 +69,11 @@ Map<String, _KeywordData> _compileKeywords(dynamic rawKeywords, bool? caseInsens
     compileList(scopeName, rawKeywords);
   } else if (rawKeywords is Map) {
     for (final MapEntry entry in rawKeywords.entries) {
-      compiledKeywords.addAll(_compileKeywords(entry.value, caseInsensitive, entry.key));
+      compiledKeywords
+          .addAll(_compileKeywords(entry.value, caseInsensitive, entry.key));
     }
   }
   return compiledKeywords;
-
 }
 
 /// Returns the proper score for a given keyword
